@@ -1,0 +1,50 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\author{Francois Coppens}
+\title{BCNTLS $^4$HeDFT Codebase | Quickstart Guide }
+\begin{document}
+	\maketitle
+	\emph{An Internet connection and the `git'-program is required on the machine where the Git commands are going to be executed ! This should already be installed in most cases.}
+	\section{Obtaining the code}
+	To obtain the code only one command in a terminal window is required. Change to the directory where you want the top level directory of the code to reside and execute
+	\begin{verbatim}
+	$ git clone <GitHub URL>
+	\end{verbatim}
+	where \verb|<GitHub URL>| needs to be substituted by on of
+	\begin{description}[align=right,labelwidth=0.35cm]
+		\item [1.] \verb|https://github.com/bcntls2016/4hedft.git|
+		\item[2.] \verb|https://github.com/bcntls2016/4hedft-vortex.git|
+		\item[3.] \verb|https://github.com/bcntls2016/4hetddft-isotropic.git|
+		\item[4.] \verb|https://github.com/bcntls2016/4hetddft-anisotropic.git|
+	\end{description}
+
+	\noindent These repositories contain, respectively,
+
+	\begin{description}[align=right,labelwidth=0.35cm]
+	\item [1.] Static 4Helium DFT
+	\item[2.] Static 4Helium DFT with vortex support
+	\item[3.] Time Dependent 4Helium DFT for impurities in an isotropic electronic state (e.g. s-states)
+	\item[4.] Time Dependent 4Helium DFT for impurities in an anisotropic electronic state (e.g. p-states)
+	\end{description}
+	
+	\section{Compiling the code}
+	After git has downloaded the repository from the Internet, chance to the repository directory which should be named after the last part of the URL without the \verb|.git| part. Then execute
+	\begin{verbatim}
+	$ git checkout -b work
+	\end{verbatim}
+	This will create a new git `branch' called work where we can work in while not contaminating the `master' branch. 
+	
+	You need to create a makefile to tailor it to your machines architecture. You can use one of the templates named  \verb|makefile.<machine>| if you want and save it as \verb|makefile|. After you have created your own makefile and saved it as \verb|makefile| execute
+	\begin{verbatim}
+	$ make
+	\end{verbatim}
+	After there are no errors one of \verb|BCN4HeDFT, scalarimp_absor_new, vectorimp_absor| executables should be ready to use, unless you changed the name in your makefile.
+	
+	\emph{Make sure that the makefile's file name is} \verb+makefile+ \emph{otherwise your own customizations could be overwritten after an update !}
+
+\end{document}
