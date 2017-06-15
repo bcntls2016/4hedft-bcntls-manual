@@ -1,0 +1,370 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{enumitem}
+\usepackage[parfill]{parskip}
+
+\definecolor{lightblue}{rgb}{0.145,0.6666,1}
+\definecolor{red}{rgb}{1,0,0}
+\author{Fran\c{c}ois Coppens}
+\title{$^4$HeDFT BCN-TLS | User Manual }
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	\newpage
+	\section{Prerequisites}
+	\subsection{General}
+	\begin{itemize}
+		\item An internet connection
+		\item a recent version of the `Git'-program (https://git-scm.com/downloads)
+		\item the Intel MKL/FFT-- or other Fast Fourier Transform library
+		\item a recent version of the Intel Fortran compiler (iFort)
+	\end{itemize}
+
+	\subsection{CECAM DFT School}
+	\subsubsection{UNIX/Linux}
+		If you have a recent UNIX/Linux distribution installed on your computer, everything you need should already be there.
+	\subsubsection{Windows}
+		In principle, only a good terminal emulator is needed that supports `X11-forwarding'. Something like `PuTTY' will work fine. You can download it here: {\color{lightblue}\verb|https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html|}
+
+	\section{General notes on obtaining and compiling the code}
+	
+	{\color{red}\emph{\textbf{A step-by-step procedure is given in Section \ref{compiling}}}}
+	
+	There are four main programs, each in its own repository on the GitHub website. They are respectively:
+	\begin{description}[align=right,labelwidth=0.50cm]
+		\item [1. ] Static $^4$He DFT, supporting classical-- and quantum impurities
+		\item[2. ] Static $^4$He DFT, supporting vortical droplet states, classical-- and quantum impurities 
+		\item[3. ] Time-dependent $^4$He DFT for classical atomic impurities in an isotropic electronic state (e.g. s-states)
+		\item[4. ] Time-dependent $^4$He DFT for classical atomic impurities in an anisotropic electronic state (e.g. p,d-states)
+	\end{description}
+	To obtain the code, only one command in a terminal window is required. Change to the directory where you want the top level directory of the code to reside and execute
+	\begin{verbatim}
+	$ git clone <GitHub URL>
+	\end{verbatim}
+	where \verb|<GitHub URL>| needs to be substituted by on of the following URLs:
+	\begin{description}[align=right,labelwidth=0.5cm]
+		\item[1. ] \verb|https://github.com/bcntls2016/4hedft.git|
+		\item[2. ] \verb|https://github.com/bcntls2016/4hedft-vortex.git|
+		\item[3. ] \verb|https://github.com/bcntls2016/4hetddft-isotropic.git|
+		\item[4. ] \verb|https://github.com/bcntls2016/4hetddft-anisotropic.git|
+	\end{description}
+
+	After git has downloaded the repository from the Internet, change to the repository directory which should be named after the last part of the URL without the \verb|.git|-part, and create a git `work'-branch
+	\begin{verbatim}
+	$ git checkout -b work
+	\end{verbatim}
+	This will create a new git branch called `work' in which we can work, whilst not contaminating the `master'-branch and prevents merge conflicts in the `master'-branch during updates.
+
+	The next step is to create a makefile and tailor it to your machines architecture. You can use the provided `makefile' called \verb|makefile|. It's are optimized for the Intel AVX architecture, with some extra machine specific optimisations for EOS' architecture. You can use it as-is or as a template for your own one. Beware that if you use your own FFT-library, make sure that they are locatable by the `make'-program. If you use Intel's MKL library you can use the environment variable \verb|$MKLROOT| (see include makefile as an example). Start the compilation by executing
+	\begin{verbatim}
+		$ make && make clean
+	\end{verbatim}
+	After there are no errors one of the \{\verb|4hedft, 4hedft-vortex,| \\ \verb|4hetddft-isotropic, 4hetddft-anisotropic|\} executables should be available in the code directory, unless you changed the program name in your makefile.
+
+	\emph{Make sure that all your changes are staged and committed otherwise your own customizations could be overwritten after a `}\verb|git pull|'\emph{!}
+	
+	\section{Static $^4$HeDFT}
+	
+	\subsection{First calculation: A pure $^4$He$_N$ droplet}
+	The easiest calculation to do is a pure $^4$He$_N$ droplet. A typical droplet size used to study things like desorption dynamics and collisions is about $N=1000$ atoms and is $\sim\!44\,\mathrm{\AA}$ in diameter. It is large enough so that it exhibits the desired physical properties and at the same time small enough to keep it computationally feasable. This is why we shall start with a $^4$He$_{1000}$ droplet.
+	
+	The program will setup a simulation grid in cartesian coordinates. The helium density will be determined at each point of the grid, which should be large enough to contain the droplet. The mesh size should be $\sim\!0.4\,\mathrm{\AA}$
+	
+	But before we do that we need to pick and compile the needed program. In this case we need the static DFT program (program 1. in the list).
+	
+	\subsubsection{Setting up and compiling the code}\label{compiling}
+	We first need to logon to the EOS supercomputer. This is done using the `\verb|ssh|' program on Linux/UNIX, or with, e.g., `PuTTY' on Windows. From the Linux command line simply execute
+	\begin{verbatim}
+	$ ssh <cecam user ID>@eos.calmip.univ-toulouse.fr
+	\end{verbatim}
+	After you have logged into EOS over SSH through either your linux terminal or PuTTY you should be in your home directory. If you're not sure or you got lost, simply execute the command \verb|cd| without any arguments. We will first setup the correct compiler suite (\verb|module|), then we create a directory called `\verb|code|' where our programs will reside. Finally we will compile the code into an executable program.
+	\begin{verbatim}
+	$ module purge
+	$ module load intel/17.0.4
+	$ mkdir code
+	$ cd code
+	$ git clone https://github.com/bcntls2016/4hedft.git
+	$ cd 4hedft
+	$ make && make clean
+	\end{verbatim}
+	
+	\subsubsection{Preparing the calculation directory}
+	\label{sec:setup}
+	It is good practice to create a separate directory for each calculation to keep all the input-- and output files together. Firt go back to your home directory as explained in the previous section. Once you are there, we are going to create a directory called `\verb|static|' that will contain all the static calculations. Then inside that one the directory `\verb|pure-4he1000|' will be created to host your first calculation.
+	\begin{verbatim}
+	$ mkdir static
+	$ cd static
+	$ mkdir pure-4he1000
+	$ cd pure-4he1000
+	\end{verbatim}
+	
+	Inside the \verb|code| directory there is a folder named `\verb|input_files|' which contains the input parameters for the calculation (\verb|pure-4he1000.input|) and a script to submit the calculation to the computer cluster (\verb|pure-4he1000.sbatch|). We copy these files into our calculation directory and make a `symbolic link' to the program:
+	\begin{verbatim}
+		$ cp ../../code/4hedft/input_files/pure-4he1000.input .
+		$ cp ../../code/4hedft/input_files/pure-4he1000.sbatch .
+		$ ln -s ../../code/4hedft/4hedft .
+	\end{verbatim}
+	
+	Before we submit our first calculation you have to be familiar with the input variables in the input-file.
+	
+	\subsubsection{The minimal set of input parameters}
+	Here follows a description of a minimal set of paramaters that need to be setup for a successful calculation. There are more parameters than there are in this file. The full set of parameters that can be controled will be given and explained later.
+
+	\begin{center}
+	\begin{tabular}{l|p{9.6cm}}
+		\multicolumn{2}{r}{\textbf{General information}} \\
+		\hline\hline
+		title		& the title of the calculation	\\
+		\hline
+		nthread		& number of OpenMP threads to use	\\
+		\hline
+		mode		& \begin{enumerate}
+			\item[0 --] continue a calculation while reading all the input parameters from the start-density
+			\item[1 --] build, from scratch, a density for a pure 4He$_N$ droplet
+			\item[2 --] build, from scratch, a density for a 4He$_N$ droplet and a \emph{quantum} impurity
+			\item[3 --] build, from scratch,  a density for a 4He$_N$ droplet and a \emph{classical} impurity
+			\item[4 --] continue a calculation but ignore the impurity's position in the start-density and use the position given in the input file/impurity-wave-function. Can be used to find e.g.
+			\begin{itemize}
+				\item[\ding{105}] the ground state of a droplet with an impurity (\emph{classical only}), starting from a pure droplet, or 
+				\item[\ding{105}] the ground state of a displaced impurity (\emph{classical/quantum}) under a constraint, starting from an unconstrained ground state
+			\end{itemize}
+		\end{enumerate}
+	\end{tabular}
+	\begin{tabular}{l|p{9.6cm}}
+		\multicolumn{2}{r}{\textbf{Grid}}	\\
+		\hline\hline
+		\{x,y,z\}max	&	the grid goes from -\{x,y,z\}max to \{x,y,z\}max so the size is 2$\times$\{{x,y,z}\}max \\
+		\hline
+		n\{x,y,z\}		&	number of grid points in the \{x,y,z\}-direction
+	\end{tabular}
+	\begin{tabular}{l|p{9.6cm}}
+		\multicolumn{2}{r}{\textbf{}}	\\
+		\multicolumn{2}{r}{\textbf{Droplet properties}}	\\
+		\hline\hline
+		n4				&	number of $^4$He atoms	\\
+		\hline
+		\{x,y,z\}c		&	droplet Center-of-Mass position	\\
+		\hline
+		core4		& the used functional for the $^4$He density. This field is ignored if `lsolid' is set to `.true.'\\
+		\hline
+		lsolid		& switch to enable/disable the use of the `Solid Functional' \\
+		\hline
+		limp		& treat the impurity classically or quantum\\
+		\hline
+		lexternal	& treat the impurity as an external field
+	\end{tabular}
+	\begin{tabular}{l|p{9.6cm}}
+		\multicolumn{2}{r}{\textbf{}}	\\
+		\multicolumn{2}{r}{\textbf{Output control}}	\\
+		\hline\hline
+		pener & print an energy overview every $n\in\mathbb{N}$ iterations	\\
+		\hline
+		pdenpar	& print a partially converged density every $n\in\mathbb{N}$ iterations	\\
+		\hline
+		filedenout 	& filename of the final converged density
+	\end{tabular}
+	\begin{tabular}{l|p{9.6cm}}
+		\multicolumn{2}{r}{\textbf{Computational parameters}}	\\
+		\hline\hline
+		niter		& total number of $n\in\mathbb{N}$ iterations. When $n$ is reached, the program is stopped, even if the density is not converged\\
+		\hline
+		precie		& precision $0<r\in\mathbb{R}<1$ of the error in the total energy\\
+		\hline
+		pafl		& imaginary timestep size $\tau\in\mathbb{R}_{>0}$\\
+		\hline
+		lpaflv		& switch to enable/disable gradual increase in imaginary timestep size\\
+		\hline
+		nstepp		& number of imaginary timestep size increments\\
+		\hline
+		/ & 	\\
+		1000 0.0001 & use an imaginary timestep of 0.0001 for the first 1000 iterations \\
+		2000 0.0005 & an imaginary timestep of 0.0005 for the next 2000  \\
+		3000	0.0010 & an imaginary timestep of 0.001 for the rest
+	\end{tabular}
+	\end{center}
+
+	\subsubsection{Execution and output files}
+	To start the actual calculation and assuming the name of the symbolic link you made earlier carries the same name as the executable one executes in the calculation directory
+	\begin{verbatim}
+	$ ./BCN4HeDFT < pure-4he1000.input > pure-4he1000.res 2> error.log &
+	\end{verbatim}
+	The standard output of the executable itself will be written to the file \newline \verb|pure-4he1000.res| and the errors to \verb|error.log|. The `\verb|&|' means that the program will be executed in the background so we keep our terminal free to use for other things.
+	
+	The program will now start to write some output files which will be explained in the following table
+	\begin{center}
+	\begin{tabular}{l|p{7.5cm}}
+		\multicolumn{2}{r}{\textbf{Output files}} \\
+		\hline\hline
+		DFT4He3d.namelist.read			& a complete list of all the input variables, including the ones that were not explicitly given in the input file \\
+		\hline
+		den-\{x,y,z\}.dat				& density profile in the \{x,y,z\}-direction at the time of the last written partial density \\
+		\hline
+		den.out							& the converged output density (if not changed in `filedenout') \\
+		\hline
+		den0-\{x,y,z\}.dat				& density profile in the \{x,y,z\}-direction at the start of the calculation \\
+		\hline
+		density.\{iteration\#\}.out	& partially converged density at time of imaginary timestep increment \\
+		\hline
+		partial.density\{1,2,\ldots\}	& partially converged density at \{1,2,\ldots\}$\times$pdenpar \\
+		\hline
+		pure-4he1000.error				& file containing the messages to \emph{stderr} generated by the program \\
+		\hline
+		pure-4he1000.res				& file containing the messages to \emph{stdout} generated by the program
+	\end{tabular}
+	\end{center}
+	
+	\subsection{A $^4$He$_{1000}$ droplet with a classic impurity}
+	Building the ground-state density for a droplet with a classic impurity can be done in two ways. Building the whole complex from scratch, or using an exsiting droplet and adding the impurity. The easiest method is the first, while the fastest methode is the second one; when adding the impurity to a converged pure droplet, it only needs to adapt locally, as long as the initial choice of the impurity's location is not choosen too poorly.
+	
+	For each of the two cases, the following parameters need to be changed and added
+	\begin{center}
+	\verb|lexternal = .false.|	$\quad\Longrightarrow\quad$	\verb|lexternal = .true.|,
+	\end{center}
+	and the following six new parameters in the input file need to be set.
+
+	\begin{center}
+	\begin{tabular}{l|p{9.75cm}}
+		\multicolumn{2}{r}{\textbf{Added parameters}} \\
+		\hline\hline
+		mimpur 			& impurity mass in unified atomic mass units (u) 	\\
+		rimpur			& radius of the impurity. Usually the distance to the bottom of the potential well in the $^4He$-X pair potential is a good choice	\\
+		\{x,y,z\}imp	& location of the center of mass of the impurity relative to the calculation grid	\\
+		selec\_gs		& the ground state pair interaction potential to use. These can be looked-up in the file `V\_impur.f90' in the code repository\\
+		r\_cutoff\_gs	& cut-off radius for the pair interaction potential 	\\
+		umax\_gs 		& cut-off value for the pair interaction potential
+	\end{tabular}
+	\end{center}
+	\vspace{0.2cm}
+	As a consequence, there are also six new output files containing information about the interaction between the impurity and the droplet
+	
+		\begin{center}
+		\begin{tabular}{l|p{7.5cm}}
+			\multicolumn{2}{r}{\textbf{Output files}} \\
+			\hline\hline
+			uext-\{x,y,z\}.dat			& \verb|<|\textbf{put description here}\verb|>| \\
+			\hline
+			uext-\{xy,yz,xz\}.dat				& \verb|<|\textbf{put description here}\verb|>| \\
+		\end{tabular}
+	\end{center}
+
+	\subsubsection{Building the complex from scratch}\label{sec:ck-fs}
+	To build the X-$^4$He$_N$ complex we now only need to change one parameter
+	\begin{center}
+	\verb|mode = 1|	$\quad\Longrightarrow\quad$	\verb|mode = 3|
+	\end{center}
+	You will find an input file that is already prepared for this in the \verb|input_files| directory called `\verb|ck-4he1000-fs.input|'. Now setup your calculation directory like explained in section \ref{sec:setup} and start the calculation by executing
+	\begin{verbatim}
+	$ ./BCN4HeDFT < ck-4he1000-fs.input > ck-4he1000-fs.res 2> error.log &
+	\end{verbatim}	
+	
+	\subsubsection{Building the complex from a converged pure droplet}
+	To build the X-$^4$He$_N$ complex we need to change the parameter
+	\begin{center}
+	\verb|mode = 1|	$\quad\Longrightarrow\quad$	\verb|mode = 4|,
+	\end{center}
+	and add one extra parameter to our input-file
+	\begin{center}
+	\begin{tabular}{l|p{9.75cm}}
+		\multicolumn{2}{r}{\textbf{Added parameter}} \\
+		\hline\hline
+		filedenin 			& filename of the converged input density of a pure droplet \\
+	\end{tabular}
+	\end{center}
+	\vspace{0.1cm}
+	Again, prepare your calculation directory like before, with one extra edition. We need either copy an input density to the calculation directory, make a symbolic link to one, or give the full relative path to one in the input file. Making a copy of an exising one is preferable since you have everything you need in one directory for future refenrence.
+	
+	\emph{Be carful that the box size and number of points of the input density correspond to the box size and number of points in the input file.}
+	
+	An already prepared input file for this in the \verb|input_files| directory called `\verb|ck-4he1000-fd.input|'.
+	
+	Start the calculation as before:
+	\begin{verbatim}
+	$ ./BCN4HeDFT < ck-4he1000-fd.input > ck-4he1000-fd.res 2> error.log &
+	\end{verbatim}	
+
+	\subsection{A $^4$He$_{1000}$ droplet with a classic impurity under a constraint}\label{sec:ck-constr}
+	
+	To impose a given separation between the center of mass of the droplet and the impurity, we need to do the calculation under a constraint. For a constrained calculation we advise to start with the ground state of a droplet containing an impurity at its equilibrium position, otherwise the calculation will take a long time to converge.
+	
+	We need to add three new parameters to out input file.
+		\begin{center}
+		\begin{tabular}{l|p{9.75cm}}
+			\multicolumn{2}{r}{\textbf{Added parameters}} \\
+			\hline\hline
+			lconstraint 			& enables the constraint energy penalty term $\frac{1}{2}\times Intens\times(z_{imp}-<z_{He}>-z_{dist})$ (true/false) \\
+			intens 			& intensity of the penalty term \\
+			zdist 			& constrained distance of the impurity to the center of mass of the droplet in \AA. Adjust `zimp' and `zdist' such that $z_{imp}-<z_{He}>-z_{dist}=0$' is satisfied  \\
+		\end{tabular}
+	\end{center}
+	\vspace{0.2cm}
+	An example input file is provided called \verb|ck-constrained-4he1000.input| is provided in the usual location.
+	
+	\subsection{A $^4$He$_{1000}$ droplet with a quantum impurity}
+	When the mass of the impurity is getting too small for its position to be accurately calculated classically, we need to solve its Schrodinger equation. 
+	
+	In this case there is no possibility to start from an already converged pure droplet. In this case, the only three things that change with respect to the case described in section \ref{sec:ck-fs}
+	\begin{center}
+		\verb|mode = 3|	$\quad\Longrightarrow\quad$	\verb|mode = 2| \\
+		\verb|limp = .false.|	$\quad\Longrightarrow\quad$	\verb|limp = .true.| \\
+		\verb|lexternal = .true.|	$\quad\Longrightarrow\quad$	\verb|lexternal = false|
+	\end{center}
+		
+	and add the parameter
+	
+	\begin{center}
+	\begin{tabular}{l|p{9.75cm}}
+		\multicolumn{2}{r}{\textbf{Added parameters}} \\
+		\hline\hline
+		fileimpout			&  impurity density output filename  
+	\end{tabular}
+	\end{center}
+	to save the impurity wavefunction to disk.
+
+	\subsection{A $^4$He$_{1000}$ droplet with a quantum impurity under a constraint}
+	
+	This can be done in mode = 0 and mode = 4, since the position is calculated from the wave function, and then shifted. Then both wavefunctions are relaxed in eachothers mean field. For sake of consitancy and clarity we recommend to use mode = 4 to not confuse it with a calculation that is just a continuation of the previous one.
+	
+	Compared to the calculation done in section \ref{sec:ck-constr} we need to change
+	
+		\begin{center}
+		\verb|limp = .false.|	$\quad\Longrightarrow\quad$	\verb|limp = .true.| \\
+		\verb|lexternal = .true.|	$\quad\Longrightarrow\quad$	\verb|lexternal = false|
+	\end{center}
+	
+	to indicate we want to treat the impurity quantal, and add the parameters
+	
+	\begin{center}
+		\begin{tabular}{l|p{9.75cm}}
+			\multicolumn{2}{r}{\textbf{Added parameters}} \\
+			\hline\hline
+			 lconstraint\_imp			&  indicate that the impurity wavefunction should be relaxed under a constraint  \\
+			 fileimpin		&	impurity density input filename \\
+			 fileimpout		&	impurity density output filename
+		\end{tabular}
+	\end{center}
+	
+	\subsection{A pure $^4$He$_{1000}$ droplet with line vortex}
+	To create droplets hosting one or more vortices, with or without the presence of an impurity, and obtain their ground states we need an extendedversion of the static code. As before, to obtain and download the code we execute
+	\begin{verbatim}
+	$ git clone https://github.com/bcntls2016/4hedft-vortex.git
+	$ cd 4hedft4hedft-vortex
+	$ git checkout -b work
+	<customise or create makefile to you needs>
+	$ make && make clean
+	\end{verbatim}
+	
+	To specify the properties of the vorex, we need to add four new entries in our main input file to enable the creation of droplets hosting vortices. Also an extra imput file has to be provided to specify the location(s) of the vort(ex/ices)
+	
+	\section{Dynamic $^4$HeDFT}
+	
+	\subsection{Impurities in a spherically symmetric electronic state}
+	\subsection{Impurities in a anisotropic electronic state (p,d-states)}
+	
+\end{document}
