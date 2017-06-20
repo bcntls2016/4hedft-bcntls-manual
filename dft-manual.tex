@@ -443,7 +443,7 @@
 	
 	and an extra input file \verb|vortex.input|
 	
-		\begin{center}
+	\begin{center}
 		\begin{tabular}{l|p{8.0cm}}
 			\multicolumn{2}{r}{\textbf{vortex.input parameters}} \\
 			\hline\hline
@@ -467,8 +467,117 @@
 	\newpage
 	
 	\section{Dynamic $^4$HeDFT}
+	From a pragmatic point of view, the dynamics is much simpler than the statics. It only needs an input density and some initial parameters. It doesn't care if the density is converged or not or if it is an eigen state of the Hamiltonian. It will simply take the input data and propagate it in time, even if the inputs are silly or make no physical sense. As long as the errors keep withing bounds, it keeps on going. It assumes the user knows what it's doing.
+	
+	In the following two sections we will give to simple dynamical processes as examples. The simplest will be a head-on collision between a heliophilic atomic impurity (Xe) and a $^4$He$_{1000}$ droplet. The second more involved example will demonstrate the dynamical process of photo-exciting a heliophobic atomic impurity (K in a $K-^4$He$_{1000}$ system) from the K(4s) state to an excited X(4P) state.
 	
 	\subsection{Impurities in a spherically symmetric electronic state}
-	\subsection{Impurities in a anisotropic electronic state (p,d-states)}
+	\begin{verbatim}
+	$ module purge
+	$ module load intel/17.0.4
+	$ cd code
+	$ git clone https://github.com/bcntls2016/4hetddft-isotropic.git
+	$ cd 4hetddft-isotropic
+	$ make && make clean
+	\end{verbatim}
 	
+	\begin{center}
+		\begin{tabular}{l|p{8.0cm}}
+			\multicolumn{2}{r}{\textbf{New input parameters}} \\
+			\hline\hline	
+			mode
+			selec
+			r\_cutoff	& fdfd \\
+			umax	& fdfd \\
+			vximp	& fdfd \\
+			vyimp	& fdfd \\
+			vzimp	& fdfd \\
+			core4	& fdfd \\
+			deltatps	& fdfd \\
+			filerimp	& fdfd \\
+			filevimp	& fdfd \\
+			fileaimp	& fdfd \\
+			filedenout	& fdfd \\
+			fileimpout	& fdfd \\
+			pener	& fdfd \\
+			pdenpar	& fdfd \\
+			pcurr	& fdfd \\
+			tzmean	& fdfd \\
+		\end{tabular}
+	\end{center}
+
+	\begin{center}
+	\begin{tabular}{l|p{7.5cm}}
+		\multicolumn{2}{r}{\textbf{Output files}} \\
+		\hline\hline
+			density.$n$.dat	& file containing the full 3-dimensional wavefunction of the helium droplet and also the position and velocity of the atomic impurity, if present. The have some information in the header containing information on the number of iterations, the used time-step, the current evolution time, etc, during the time of writing. The `$n$' in the filename is an integer ID. The difference in time between the ($n$)th and ($n+1$)th file is \verb| deltatps|$\times$\verb|pcurr|. \\
+			rimp.out.\#	& \\
+			vimp.out.\#	& \\
+			aimp.out.\#	& \\
+			DFT4He3d.namelist.read	& \\
+			hedenini-\{x,y,z\}	& \\
+			*.err	&	\\
+			*.res.\#	&	\\
+			timec.dat	& \\
+			uext.dat	&	\\
+			uimp-\{x,y,z\}	& \\		
+	\end{tabular}
+\end{center}
+	
+	\subsection{Impurities in a anisotropic electronic state (p,d-states)}
+	\begin{verbatim}
+	$ module purge
+	$ module load intel/17.0.4
+	$ cd code
+	$ git clone https://github.com/bcntls2016/4hetddft-anisotropic.git
+	$ cd 4hetddft-anisotropic
+	$ make && make clean
+	\end{verbatim}
+
+	\begin{center}
+	\begin{tabular}{l|p{8.0cm}}
+		\multicolumn{2}{r}{\textbf{New input parameters}} \\
+		\hline\hline
+			Lstate	& fdfd \\
+			Ldiag\_jz	& fdfd \\
+			Ljz	& fdfd \\
+			instate	& fdfd \\
+			Als\_P	& fdfd \\
+			selec\_pi	& fdfd \\
+			r\_cutoff\_pi	& fdfd \\
+			umax\_pi	& fdfd \\
+			selec\_sigma	& fdfd \\
+			r\_cutoff\_sigma	& fdfd \\
+			umax\_sigma	& fdfd \\
+		\end{tabular}
+	\end{center}
+
+	\begin{center}
+	\begin{tabular}{l|p{7.5cm}}
+		\multicolumn{2}{r}{\textbf{Output files}} \\
+		\hline\hline
+		lambda.out	& \\
+		projections.dat	&	\\
+	\end{tabular}
+\end{center}
+
+\subsection{Monitoring a dynamic calculation}
+
+\subsection{Continuing a previous dynamic calculation}
+	\begin{center}
+		\begin{tabular}{l|p{8.0cm}}
+		\multicolumn{2}{r}{\textbf{New input parameters}} \\
+		\hline\hline
+			icurr	& fdfd \\
+			iter0	& fdfd \\
+			time0	& fdfd \\
+	\end{tabular}
+\end{center}
+
+\subsection{(Visualising output data)}
+\subsubsection{(1-dimensional data: gnuplot, python/matplotlib)}
+\subsubsection{(2-dimensional data: python/matplotlib)}
+\subsubsection{(3-dimensional data: ParaView)}
+
+
 \end{document}
